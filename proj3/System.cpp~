@@ -1,0 +1,208 @@
+// NAME: System.cpp
+// AUTHOR: Joby Tanseco
+// DATE: 7/5/2017
+// SECTION: 2
+// DESCRIPTION: This is the implementation of the System class
+
+#include "System.h"
+
+
+const int  VIEW_ALL = 1;
+const int  VIEW_RANK = 2;
+const int  VIEW_TYPE = 3;
+const int RENT_NAME = 4;
+const int ADD_FILE = 5;
+const int SORT_RANK = 6;
+const int EXIT = 7;
+
+
+
+//Name: System (Default Constructor) UNUSED
+//Precondition: None
+//Postcondition: Builds a new Redbox system
+System::System(){}
+
+
+//Name: System (Overloaded Constructor)
+//Precondition: Requires valid filename
+//Postcondition: Builds a new Redbox system from a specific file
+System::System(string fileName){
+  loadMedia(fileName);
+
+  mainMenu();
+
+}
+
+//Name: mainMenu
+//Precondition: None
+//Postcondition: User interface that calls all functions
+void System::mainMenu(){
+
+  //welcomes user
+  cout << "Welcome to Digital Redbox" << endl;
+
+  int userIn = 0;
+  string type;
+  string tempName = " ";
+
+  //loops until user wants to exit
+  while (userIn != 7){
+    userIn = 0;
+    //loops until user enters valid int
+    while (userIn < 1 || userIn > 7){
+
+      cout << "What would you like to do?" << endl;
+      cout << VIEW_ALL << ". View All Media Files" << endl;
+      cout << VIEW_RANK << ". View Media Files By Ranking" << endl;
+      cout << VIEW_TYPE << ". View Media Files By Type" << endl;
+      cout << RENT_NAME << ". Rent a Media File By Name" << endl;
+      cout << ADD_FILE << ". Add a Media File" << endl;
+      cout << SORT_RANK << ". Sort By Ranking" << endl;
+      cout << EXIT << ". Exit" << endl;
+      cin >> userIn;
+    }
+
+    //switch statement for each option
+    switch (userIn){
+
+    case VIEW_ALL: //View All the Media Files
+      printStorage(0);
+      break;
+
+    case VIEW_RANK: //View In Ranked order
+      m_media.printByRank();
+      break;
+
+    case VIEW_TYPE: //view all of one type
+      type = "";
+      while (type != "BLURAY" && type != "DVD" && type != "PS4" 
+	     && type != "XBOX"){
+	cout << "What type of media?" << endl;
+	cout << "BLURAY, DVD, PS4, XBOX" << endl;
+	cin >> type;
+      }
+      m_media.printByMedia(type);
+      break;
+
+    case RENT_NAME: //remove a media
+      cout << "What is the name of the media?" << endl;
+      cin.ignore();
+      getline(cin, tempName);
+      removeMedia(tempName);
+      break;
+
+    case ADD_FILE: //adds a file
+      insertMedia();
+      break;
+
+    case SORT_RANK: //sorts in rank order
+      m_media.sortByRank();
+      cout << "Sorted" << endl;
+      break;
+
+    case EXIT: //exits program
+      cout << "Thanks for using Redbox!" << endl;
+      break;
+    }
+
+  }
+
+}
+
+//Name: loadMedia
+//Precondition: Requires valid filename
+//Postcondition: Loads all data from file into node and pushes into storage
+int System::loadMedia(string fileName){
+
+  Storage tempMedia(fileName);
+  m_media = tempMedia;
+
+  int count = 0;
+  ifstream fin(fileName.c_str()); //opens file
+  string tempRank;
+  string tempName;
+  string tempYear;
+  string tempType;
+  char deli = '\t';
+  int rank, year;
+  //gets variables
+  while(getline(fin, tempRank, deli)){
+    getline(fin, tempName, deli);
+    getline(fin, tempYear, deli);
+    getline(fin, tempType);
+
+    //converts to ints
+    rank = atoi(tempRank.c_str());
+    year = atoi(tempYear.c_str());
+
+    //creates Media, inserts into linked list
+    Media tempMedia(rank, tempName, year, tempType);
+    m_media.insertEnd(tempMedia);
+
+    count ++;//counter
+  }
+  fin.close();//closes file
+  cout << "Media files loaded: " << count << endl;
+  return 0;
+}
+
+
+//Name: printStorage
+//Precondition:
+//Postcondition: Loads all data from file into node and pushes into storage
+void System::printStorage(bool isNumbered){
+  m_media.printStorage(isNumbered);
+}
+
+
+//Name: removeMedia
+//Precondition: Must have list
+//Postcondition: Prompts user for name (can have spaces) and searches list 
+//for matching media name. 
+//If found, removes from list. Double check begin/end of list.
+void System::removeMedia(string name){
+  m_media.removeByName(name);
+}
+
+
+//Name: insertMedia
+//Precondition: Must have a list
+//Postcondition: Prompts and validates users input to create new media and
+//to insert
+//into the storage. Asks for name (can have spaces), rank, type, and year.
+void System::insertMedia(){
+
+  int tempRank, tempYear;
+  string tempName, tempType; 
+
+  //asks users for input, loops if invalid
+  cout << "What type of media is it?" << endl;
+  tempType = "";
+  //media type
+  while (tempType != "BLURAY" && tempType != "DVD" &&
+	 tempType != "PS4" && tempType != "XBOX"){
+    cout << "Enter BLURAY, DVD, PS4, or XBOX:";
+    cin >> tempType;
+    }
+  //media name
+  cout << "What is the name?" << endl;
+  cin.ignore();
+  getline(cin, tempName);
+
+  //year
+  tempYear = 0;
+  while (tempYear < 1920){
+    cout << "What is the year?" << endl;
+    cin >> tempYear;
+  }
+
+  //ranking
+  tempRank = 0;
+  while (tempRank < 1 || tempRank > 20){
+    cout << "What is the ranking?" << endl;
+    cin >> tempRank;
+  }
+  //insersts it at the end of the Storage List
+  Media tempMedia(tempRank, tempName, tempYear, tempType);
+  m_media.insertEnd(tempMedia);
+}

@@ -1,0 +1,31 @@
+#include <iostream>
+#include "IntArray.h"
+
+using namespace std;
+
+int main()
+{
+  // Create IntArray objects and call methods here...
+  IntArray ia(10);
+  IntArray(-1, 0); 
+  IntArray ia2(0);
+  ia.Append('k');
+  bool x = (ia == ia2);
+  ia += ia2;
+  bool notUsed = (ia != ia2);
+  IntArray ia3(0, 2);
+  ia2 = ia + ia3;
+  int poo = ia[11];
+  ia.Get(-1);
+  ia.Get(100);
+  ia.SetItem(-1, 2);
+  ia.SetItem(100, 2);
+  ia.Del(-1,0);
+
+
+  
+  // Print out the number of errors/edge cases found
+  cout << endl << endl << IntArray::GetProgress() << endl;
+    
+  return 0;
+}

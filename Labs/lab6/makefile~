@@ -1,0 +1,14 @@
+CXX = g++
+CXXFLAGS = -Wall
+
+lab6: Student.o
+	$(CXX) $(CXXFLAGS) -c Student.cpp
+
+clean: 
+
+	rm *.o
+	rm *~
+
+run:
+
+	./lab6

@@ -1,0 +1,422 @@
+/**********************
+ ** FILE NAME: proj1.cpp
+ ** PROJECT: 1
+ ** AUTHOR: Joby Tanseco
+ ** DATE: 2/17/2017
+ ** SECTION: 19
+ ** E-MAIL: tanseco1@umbc.edu
+ **
+ ** DESCRIPTION: This program simulates a manhunt. The program will take data \
+ ** for the hider's starting point, then ask the user for input on which direc\
+ ** tion to go until the user has reached the target spot.
+ **
+ **
+ ***********************/
+
+#include <iostream>
+#include <string>
+#include <fstream>
+using namespace std;
+
+// Global Constants
+const int WIDTH_HEIGHT = 10;
+
+int startMenu();
+int mainMenu();
+void loadMap(char boardArray[][10], int coordinates[]);
+void newMap(char boardArray[][10], int coordinates[]);
+void buildMap(int coordinates[], char boardArray[][WIDTH_HEIGHT]);
+void printMap(char boardArray[][WIDTH_HEIGHT]);
+bool checkSearch(int coordinates[], int move);
+void updateBoard(char boardArray[][10], int coordinates[4], int move);
+bool checkWin(int coordinates[]);
+void hint(int coordinates[]);
+
+
+int main() {
+
+  char board[10][10] = {};
+
+  //asks user if they want to load a map, enter a new map, or exit the program
+  int startOption = startMenu();
+
+  bool exit = false;
+
+
+  int coordinates[4] = {}; 
+  //to load a program // or start a new map
+  if (startOption == 1) {
+    loadMap(board, coordinates);
+  } else if (startOption == 2) {
+    newMap(board, coordinates);
+  }
+
+  else {
+    exit = true;
+  }
+
+  //runs the rest of the program if the user decides not to exit
+  if (exit == false) {
+
+    //keeps asking until they either quit or the user wins.
+    int move;
+    bool win = false;
+    bool validSearch = false;
+
+    exit = false;
+
+    printMap(board);
+
+    move = mainMenu();
+
+    while ((exit == false) && (win == false)) {
+
+      //print map option
+      if (move == 5) {
+	printMap(board);
+	  
+	//every other move
+      }else {
+
+	validSearch = checkSearch(coordinates, move);
+	if ((move != 6) && (validSearch == false)) {
+	  cout << "You cannot search this way." << endl;
+	  validSearch = checkSearch(coordinates, move);
+	}else if (move != 6) {
+	  //once move is legal, program updates board then checks if they win
+	  updateBoard(board, coordinates, move);
+	  win = checkWin(coordinates);
+	}
+      }
+      	
+    
+      if (move == 6) {
+	exit = true;
+      }
+      if ((not exit) && (not win)) {
+	hint(coordinates);
+	cout << endl;
+	move = mainMenu();
+      }
+
+      cout << endl;
+      
+    }
+
+
+    if (win == true) {
+      cout << "You found the target!" << endl;
+    }
+
+    cout << "Thanks for playing!" << endl << endl;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// NAME: startMenu()
+// PRE-CONDITION: None. (The program has started)
+// POST-CONDITION: The user is welcomed to the app and is given the choice to  
+// load map, enter map, or exit.
+// Function will return either load, enter, or exit (1,2,3)
+//----------------------------------------------------------------------------
+int startMenu() {
+
+  //Welcomes User, asks them what they want to do, Gets input
+  int loadStart = 0;
+
+  //Asks user for input. checks if in between 1 and 3
+  while ((loadStart > 3) || (loadStart < 1)) {
+    cout << "Welcome to manhunt! \nWhat would you like to do?\n1. Load a simulation from file\n2. Start a simulation\n3. Exit" << endl;
+    cin >> loadStart;
+  }
+
+  //Function returns based on input
+  return loadStart;
+
+}
+
+
+//-----------------------------------------------------------------------------
+// NAME: mainMenu()
+// PRE-CONDITION: The board must be created into a 2D array 
+// POST-CONDITION: Returns the direction to search (or exit) (# between 1-5)
+//-----------------------------------------------------------------------------
+int mainMenu()
+{
+
+  int direction = 0;
+
+  //Asks for direction, returns user input once it is between 1-4
+  while ((direction < 1)||(direction > 6)) {
+    cout << "What woudl you like to do?" << endl;
+    cout << "1. Search North" << endl;
+    cout << "2. Search East" << endl;
+    cout << "3. Search South" << endl;
+    cout << "4. Search West" << endl;
+    cout << "5. See Map" << endl;
+    cout << "6. Exit" << endl;
+    cin >> direction;
+  }
+
+  return direction;
+
+}
+
+//----------------------------------------------------------------------------
+// NAME: loadMap()
+// PRE-CONDITION: The user prompted for the board to be loaded.
+// POST-CONDITION: no return. Sends coordinates to the board
+//----------------------------------------------------------------------------
+void loadMap(char boardArray[][WIDTH_HEIGHT], int coordinates[])
+{
+
+  //Asks user for the name fo the file and opens it
+  fstream inputStream;
+  string fileName;
+
+  cout << "What is the name of the file?" << endl;
+  cin >> fileName;
+
+  inputStream.open(fileName.c_str());
+
+  //Sets values for target and investigator coordinates
+  inputStream >> coordinates[0]; 
+  inputStream >> coordinates[1];
+  inputStream >> coordinates[2];
+  inputStream >> coordinates[3];
+
+  inputStream.close();
+
+  coordinates[0] -= 1;
+  coordinates[1] -= 1;
+  coordinates[2] -= 1;
+  coordinates[3] -= 1;
+
+  //calls the 2D array from buildMap
+  buildMap(coordinates, boardArray);
+  
+
+
+}
+
+//----------------------------------------------------------------------------
+// NAME: newMap()
+// PRE-CONDITION: the user requests to create a new 2D board.
+// POST-CONDITION: no return. Sends coordinates to the 2D board
+//----------------------------------------------------------------------------
+void newMap(char boardArray[][WIDTH_HEIGHT], int coordinates[])
+{
+
+  //has user select x and y for the investigator (between 0 and 9)
+  int xInvestigator = 11;
+  int yInvestigator = 11;
+
+  cout << "What is the X axis of the investigator?:" << endl;
+  while ((xInvestigator < 1) || (xInvestigator > 10)) {
+    cin >> xInvestigator;
+  }
+  coordinates[0] = xInvestigator;
+
+  cout << "What is the Y axis of the investigator?:" << endl;
+  while ((yInvestigator < 1) || (yInvestigator > 10)) {
+    cin >> yInvestigator;
+  }
+  coordinates[1] = yInvestigator;
+
+  //has user select x and y for target (between 0 and 9)
+  int xTarget = 11;
+  int yTarget = 11;
+
+  cout << "What is the X axis of the target?:" << endl;
+  while ((xTarget < 1) || (xTarget > 10)) {
+    cin >> xTarget;
+  }
+  coordinates[2] = xTarget;
+  
+  cout << "What is the Y axis of the target:?" << endl;
+  while ((yTarget < 1) || (yTarget > 10)) {
+    cin >> yTarget;
+  }
+  coordinates[3] = yTarget;
+
+  coordinates[0] -= 1;
+  coordinates[1] -= 1;
+  coordinates[2] -= 1;
+  coordinates[3] -= 1;
+
+  //Returns 2D array from buildMap
+  buildMap(coordinates, boardArray);
+}
+
+
+//----------------------------------------------------------------------------
+// NAME: buildMap()
+// PRE-CONDITION: the xy of the investigation and target are set in an array
+// POST-CONDITION: no return. Updates the 2D array
+//----------------------------------------------------------------------------
+void buildMap(int coordinates[4], char boardArray[][WIDTH_HEIGHT])
+{
+  // makes empty board
+  for (int row = 0; row < 11; row++) {
+    for (int item = 0; item < 11; item++) {
+      boardArray[row][item] = '_';
+    }
+  }
+
+  //adds Investigator on board
+  boardArray[coordinates[0]][coordinates[1]] = 'I';
+
+}
+
+
+//-----------------------------------------------------------------------------
+// NAME: printBoard()
+// PRE-CONDITION: The coordinates of the investigator and target are put into \
+// a 2D array.
+// POST-CONDITION: Function prints out the board (with investigator location a\
+// nd path)
+//-----------------------------------------------------------------------------
+void  printMap(char boardArray[][WIDTH_HEIGHT])
+{
+
+  //loop to print the board
+  for (int row = 0; row < WIDTH_HEIGHT; row++) {
+
+    for (int item = 0; item < WIDTH_HEIGHT; item++) {
+      cout << boardArray[row][item] << " ";
+    }
+
+    cout << " " << endl;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// NAME: checkSearch()
+// PRE-CONDITION: the user has made a move
+// POST-CONDITION: Returns a boolean to determine if they have made a valid mo\
+// ve or not.
+//-----------------------------------------------------------------------------
+bool checkSearch(int coordinates[], int move) {
+
+  bool valid = true;
+  switch (move) {
+
+      //if they search north.
+    case 1:
+      if (coordinates[0] == 0){
+	valid = false;
+      }
+      break;
+      //if they serach East
+    case 2: 
+      if (coordinates[1] == 9) {
+	valid = false;
+      }
+      break;
+      //if they search South
+    case 3:
+      if (coordinates[0] == 9) {
+	valid = false;
+      }
+      break;
+      //If they search West
+    case 4:
+      if (coordinates[1] == 0) {
+	valid = false;
+      }
+      break;
+    }
+
+  return valid;
+
+}
+
+
+//----------------------------------------------------------------------------
+// NAME: updateBoard()
+// PRE-CONDITION: The user has made their move.
+// POST-CONDITION: no return. Function updates the 2D array to have it's new \
+// location and path.
+//----------------------------------------------------------------------------
+void updateBoard(char boardArray[][10], int coordinates[], int move) {
+  
+  //replaces 'i' with '*'
+  boardArray[coordinates[0]][coordinates[1]] = '*';
+
+
+  //changes x and y coodinates of the Investigator
+  switch (move) 
+    {
+
+    //if the user moved North
+    case 1:
+      coordinates[0] = coordinates[0] - 1;
+      break;
+
+    //if the user moved East
+    case 2:
+      coordinates[1] = coordinates[1] + 1;
+      break;
+
+    //if the user moves South
+    case 3:
+      coordinates[0] = coordinates[0] + 1;
+      break;
+
+    //if the user moves West
+    case 4:
+      coordinates[1] = coordinates[1] - 1;
+      break;
+    }
+
+  //puts 'I' on new coordinates
+  boardArray[coordinates[0]][coordinates[1]] = 'I';
+}
+
+
+//---------------------------------------------------------------------------
+// NAME: checkWin();
+// PRE-CONDITION: The user has made their move and the board updated/
+// POST-CONDITION: The program returns whether the Game wins or not.
+//---------------------------------------------------------------------------
+bool checkWin(int coordinates[]) {
+  if ((coordinates[0] == coordinates[2]) && (coordinates[1] == coordinates[3])){
+
+    return true;
+
+  }else {
+    return false;
+  }
+}
+
+
+//--------------------------------------------------------------------------
+// NAME: hint();
+// PRE-CONDITION: THe user has just made a valid move.
+// POST-CONDITION: no return. the function prints a hint.
+//--------------------------------------------------------------------------
+void hint(int coordinates[]) {
+
+  //searching north
+  if (coordinates[0] > coordinates[2]) {
+    cout << "Try searching North." << endl;
+  }
+
+  //searching south
+  else if (coordinates[0] < coordinates[2]) {
+    cout << "Try searching South." << endl;
+  }
+
+  //searching East
+  else if (coordinates[1] < coordinates[3]) {
+    cout << "Try searching East." << endl;
+  }
+  
+  //searching West
+  else if (coordinates[1] > coordinates[3]) {
+    cout << "Try searching West." << endl;
+  }
+
+}
